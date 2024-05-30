@@ -204,7 +204,7 @@ class SystemAB(KcrpmdSystem):
         return None
 
     def set_dnuclei(self):
-        print("yeehaw")
+        print("something else7813264791823")
         if self.nbath == 0:
             self.dnuclei = 2
         else:
