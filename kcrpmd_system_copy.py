@@ -34,13 +34,13 @@ class KcrpmdSystem(ABC):
 
     def Vg(self, R):
         return 0.5 * (self.V0(R) + self.V1(R)) - 0.5 * np.sqrt((self.V0(R) - self.V1(R))**2 + 4 * self.K(R)**2)
-    
+
     def Ve(self, R):
         return 0.5 * (self.V0(R) + self.V1(R)) + 0.5 * np.sqrt((self.V0(R) - self.V1(R))**2 + 4 * self.K(R)**2)
 
     def VMF(self, R):
         return self.Vg(R) - 1 / self.beta * np.log(1 + np.exp(-self.beta * (self.Ve(R) - self.Vg(R))))
-    
+
     def VKP(self, R):
         V0 = self.V0(R); V1 = self.V1(R); K = self.K(R)
         if (V0 == V1):
@@ -63,16 +63,16 @@ class KcrpmdSystem(ABC):
     @abstractmethod
     def FK(self, R):
         pass
-    
+
     def Fg(self, R):
         return 0.5 * (self.F0(R) + self.F1(R)) - ((self.V0(R) - self.V1(R)) * (self.F0(R) - self.F1(R)) + 4 * self.K(R) * self.FK(R)) / (2 * np.sqrt((self.V0(R) - self.V1(R))**2 + 4 * self.K(R)**2))
-    
+
     def Fe(self, R):
         return 0.5 * (self.F0(R) + self.F1(R)) + ((self.V0(R) - self.V1(R)) * (self.F0(R) - self.F1(R)) + 4 * self.K(R) * self.FK(R)) / (2 * np.sqrt((self.V0(R) - self.V1(R))**2 + 4 * self.K(R)**2))
 
     def FMF(self, R):
         return self.Fg(R) + 0.5 * (self.Fe(R) - self.Fg(R)) * (1 + np.tanh(-0.5 * self.beta * (self.Ve(R) - self.Vg(R))))
-    
+
     def FKP(self, R):
         V0 = self.V0(R); V1 = self.V1(R); K = self.K(R)
         if (V0 == V1):
@@ -100,14 +100,14 @@ class KcrpmdSystem(ABC):
 # KC-RPMD - NVT momentum sampling and kinetic energy
 
     def sample_vy(self):
-        return np.random.normal(scale = 1. / np.sqrt(self.beta * self.my))    
+        return np.random.normal(scale = 1. / np.sqrt(self.beta * self.my))
 
     def sample_vR(self):
         return np.random.normal(scale = 1. / np.sqrt(self.beta * self.mR))
 
     def TKC(self, vy, vR):
         return 0.5 * self.my * vy**2 + np.sum(0.5 * self.mR * vR**2)
-    
+
 ##############################################################
 # KC-RPMD - potential energy functions
 
@@ -148,13 +148,13 @@ class KcrpmdSystem(ABC):
             return 0.
         else:
             return 0.5 * self.a0 * self.c * self.beta * np.sign(self.K(R)) / (np.cosh(hyperbolic_arg)**2) * self.FK(R)
-    
+
     def dC(self, R):
         hyperbolic_arg = -self.d * (self.beta * abs(self.K(R)) - 1)
         if abs(hyperbolic_arg) > 250.:
             return self.eta / (4 * np.sqrt(np.pi)) * (1 + np.tanh(-self.d * (self.beta * abs(self.K(R)) - 1))) * self.da(R) / np.sqrt(self.a(R))
         else:
-            return self.eta / (4 * np.sqrt(np.pi)) * (1 + np.tanh(-self.d * (self.beta * abs(self.K(R)) - 1))) * self.da(R) / np.sqrt(self.a(R)) + 0.5 * self.d * self.beta * np.sign(self.K(R)) * (np.sqrt(self.a(R) / np.pi) * self.eta - 1) / (np.cosh(hyperbolic_arg)**2) * self.FK(R) 
+            return self.eta / (4 * np.sqrt(np.pi)) * (1 + np.tanh(-self.d * (self.beta * abs(self.K(R)) - 1))) * self.da(R) / np.sqrt(self.a(R)) + 0.5 * self.d * self.beta * np.sign(self.K(R)) * (np.sqrt(self.a(R) / np.pi) * self.eta - 1) / (np.cosh(hyperbolic_arg)**2) * self.FK(R)
 
     def FKC_y(self, y, R):
         VKP_arg = -self.beta * self.Vr(y, 0) + np.log(self.C(R)) - self.a(R) * self.w(R)**2 - self.beta * self.VKP(R)
@@ -187,7 +187,7 @@ class SystemAB(KcrpmdSystem):
         self.Dq = sysparam[8]
         self.K0= sysparam[9]
         self.bq= sysparam[10]
-    
+
         self.set_dnuclei()
         self.set_mR()
 
@@ -198,12 +198,13 @@ class SystemAB(KcrpmdSystem):
         exp_shift = np.max(exp_arg) - 500.
         Pq_array = np.exp(exp_arg - exp_shift) / np.trapz(np.exp(exp_arg - exp_shift), q_array)
         Kq_array = Kq(q_array)
-        self.eta = 2 * np.pi * np.trapz(abs(Kq_array) * Pq_array, q_array) * np.trapz(abs(Kq_array)**2 * Pq_array, q_array) / np.trapz(abs(Kq_array)**3 * Pq_array, q_array)  
+        self.eta = 2 * np.pi * np.trapz(abs(Kq_array) * Pq_array, q_array) * np.trapz(abs(Kq_array)**2 * Pq_array, q_array) / np.trapz(abs(Kq_array)**3 * Pq_array, q_array)
         self.my = self.beta**3 * self.eta**2 / ((2*np.pi)**3) * (np.trapz(abs(Kq_array)**3 * Pq_array, q_array) / np.trapz(abs(Kq_array)**2 * Pq_array, q_array))**2
-        self.gammay = 0.5 * np.sqrt((1 + np.abs(-2 * np.log(np.sqrt(self.a0 / np.pi) * self.eta * self.beta**2) - 4 * np.trapz(np.log(abs(Kq_array)) * Pq_array, q_array))) / (self.beta * self.my)) 
+        self.gammay = 0.5 * np.sqrt((1 + np.abs(-2 * np.log(np.sqrt(self.a0 / np.pi) * self.eta * self.beta**2) - 4 * np.trapz(np.log(abs(Kq_array)) * Pq_array, q_array))) / (self.beta * self.my))
         return None
 
     def set_dnuclei(self):
+        print("yeehaw")
         if self.nbath == 0:
             self.dnuclei = 2
         else:
@@ -244,7 +245,7 @@ class SystemAB(KcrpmdSystem):
             return 0.5 * self.ms * self.omegas**2 * (R[0] - self.s0)**2 + np.sum(0.5 * self.M * self.omegaj**2 * (R[1:1 + self.nbath] - self.cj * R[0] / (self.M* self.omegaj**2))**2) + self.Vq(R[1 + self.nbath])
 
     def V1(self, R):
-        if self.nbath == 0:    
+        if self.nbath == 0:
             return 0.5 * self.ms * self.omegas**2 * (R[0] - self.s1)**2 + self.epsilon + 0.5 * self.mq * self.omegaq**2 * (R[1])**2
         else:
             return 0.5 * self.ms * self.omegas**2 * (R[0] - self.s1)**2 + self.epsilon + np.sum(0.5 * self.M * self.omegaj**2 * (R[1:1 + self.nbath] - self.cj * R[0] / (self.M* self.omegaj**2))**2) + self.Vq(R[1 + self.nbath])
@@ -276,10 +277,10 @@ class SystemAB(KcrpmdSystem):
             F[1:1 + self.nbath] = -self.M * self.omegaj**2 * (R[1:1 + self.nbath] - self.cj * R[0] / (self.M * self.omegaj**2))
             F[1 + self.nbath] = self.Fq(R[1 + self.nbath])
         return F
-    
+
     def FK(self, R):
         F = np.zeros(self.dnuclei)
-        if self.nbath == 0:    
+        if self.nbath == 0:
             F[1] = self.bq * self.K0 * np.exp(-self.bq * R[1])
         else:
             F[1 + self.nbath] = self.bq * self.K0 * np.exp(-self.bq * R[1 + self.nbath])
@@ -313,7 +314,7 @@ class SystemC(KcrpmdSystem):
         self.Ea = float(sysparam[9])
         self.Dq = float(sysparam[10])
         self.K0= float(sysparam[11])
-        self.bq= float(sysparam[12]) 
+        self.bq= float(sysparam[12])
         self.set_ABC()
 
         self.HW = sysparam[13]
@@ -365,9 +366,9 @@ class SystemC(KcrpmdSystem):
         exp_shift = np.max(exp_arg) - 500.
         Pq_array = np.exp(exp_arg - exp_shift) / np.trapz(np.exp(exp_arg - exp_shift), q_array)
         Kq_array = Kq(q_array)
-        self.eta = 2 * np.pi * np.trapz(abs(Kq_array) * Pq_array, q_array) * np.trapz(abs(Kq_array)**2 * Pq_array, q_array) / np.trapz(abs(Kq_array)**3 * Pq_array, q_array)  
+        self.eta = 2 * np.pi * np.trapz(abs(Kq_array) * Pq_array, q_array) * np.trapz(abs(Kq_array)**2 * Pq_array, q_array) / np.trapz(abs(Kq_array)**3 * Pq_array, q_array)
         self.my = self.beta**3 * self.eta**2 / ((2*np.pi)**3) * (np.trapz(abs(Kq_array)**3 * Pq_array, q_array) / np.trapz(abs(Kq_array)**2 * Pq_array, q_array))**2
-        self.gammay = 0.5 * np.sqrt((1 + np.abs(-2 * np.log(np.sqrt(self.a0 / np.pi) * self.eta * self.beta**2) - 4 * np.trapz(np.log(abs(Kq_array)) * Pq_array, q_array))) / (self.beta * self.my)) 
+        self.gammay = 0.5 * np.sqrt((1 + np.abs(-2 * np.log(np.sqrt(self.a0 / np.pi) * self.eta * self.beta**2) - 4 * np.trapz(np.log(abs(Kq_array)) * Pq_array, q_array))) / (self.beta * self.my))
         return None
 
     def set_dnuclei(self):
@@ -399,7 +400,7 @@ class SystemC(KcrpmdSystem):
             return 0.5 * self.ms * self.omegas**2 * (R[0] - self.s0)**2 + np.sum(0.5 * self.M * self.omegaj**2 * (R[1:1 + self.nbath] - self.cj * R[0] / (self.M* self.omegaj**2))**2) + self.Vq(R[1 + self.nbath])
 
     def V1(self, R):
-        if self.nbath == 0:    
+        if self.nbath == 0:
             return 0.5 * self.ms * self.omegas**2 * (R[0] - self.s1)**2 + self.epsilon + 0.5 * self.mq * self.omegaq**2 * (R[1])**2
         else:
             return 0.5 * self.ms * self.omegas**2 * (R[0] - self.s1)**2 + self.epsilon + np.sum(0.5 * self.M * self.omegaj**2 * (R[1:1 + self.nbath] - self.cj * R[0] / (self.M* self.omegaj**2))**2) + self.Vq(R[1 + self.nbath])
@@ -431,10 +432,10 @@ class SystemC(KcrpmdSystem):
             F[1:1 + self.nbath] = -self.M * self.omegaj**2 * (R[1:1 + self.nbath] - self.cj * R[0] / (self.M * self.omegaj**2))
             F[1 + self.nbath] = self.Fq(R[1 + self.nbath])
         return F
-    
+
     def FK(self, R):
         F = np.zeros(self.dnuclei)
-        if self.nbath == 0:    
+        if self.nbath == 0:
             F[1] = self.bq * self.K0 * np.exp(-self.bq * R[1])
         else:
             F[1 + self.nbath] = self.bq * self.K0 * np.exp(-self.bq * R[1 + self.nbath])
@@ -453,4 +454,3 @@ class SystemC(KcrpmdSystem):
             if self.HW == 'nad':
                 R[1 + self.nbath] = self.q0
         return R
-
