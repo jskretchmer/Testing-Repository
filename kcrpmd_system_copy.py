@@ -205,7 +205,7 @@ class SystemAB(KcrpmdSystem):
         return None
 
     def set_dnuclei(self):
-        print("yeehaw")
+        print("something else7813264791823")
         if self.nbath == 0:
             # I CHANGED THE DNUCLEI FROM 2 TO 3 TO TEST FOR CONFLICTS
             self.dnuclei = 3
