@@ -7,6 +7,7 @@ class KcrpmdSystem(ABC):
 
     @abstractmethod
     def __init__(self, beta, a0, b, c, d, sysparam):
+        self.TESTING_VARIABLE = "THIS IS JUST SOME TESTING VARIABLE I'M ADDING TO TEST FOR CONFLICTS!!!"
         self.beta = beta
         self.a0 = a0
         self.b = b
@@ -206,7 +207,8 @@ class SystemAB(KcrpmdSystem):
     def set_dnuclei(self):
         print("yeehaw")
         if self.nbath == 0:
-            self.dnuclei = 2
+            # I CHANGED THE DNUCLEI FROM 2 TO 3 TO TEST FOR CONFLICTS
+            self.dnuclei = 3
         else:
             self.dnuclei = 2 + self.nbath
             self.M = self.ms
@@ -214,6 +216,10 @@ class SystemAB(KcrpmdSystem):
             self.gamma = 1.0 * self.M * self.omegac
             self.omegaj = -self.omegac * np.log((np.arange(self.nbath) + 0.5) / self.nbath)
             self.cj = self.omegaj * np.sqrt(2 * self.gamma * self.M * self.omegac / (self.nbath * np.pi))
+
+    def USELESS_FUNCTION(self):
+        print("HERE I ADDED SOME WORTHLESS FUNCTION TO TEST FOR CONFLICTS!!!")
+        return None
 
     def set_mR(self):
         mR = np.ones(self.dnuclei)
